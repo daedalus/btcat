@@ -143,10 +143,10 @@ def getpiece(i):
 def runmplayer():
     time.sleep(1)
     #os.system("ffplay http://127.0.0.1:50008")
-    os.system("player.bat")
+    #os.system("player.bat")
     #os.system("vlc http://127.0.0.1:50008")
     #os.system("vlc play.m3u")
-    #os.system("mplayer -fs http://127.0.0.1:50008")
+    os.system("mplayer -fs http://127.0.0.1:50008")
     #os.system("D:/Python26/mplayer -cache 100 -fs http://127.0.0.1:50008")
 
 def read2(s):
@@ -237,7 +237,27 @@ def start(torrent,fileid,outdir,_outputcmd):
     subprocess = None
     completed = False
     outputcmd=_outputcmd
-    info = lt.torrent_info(torrent)
+
+    ses = lt.session()
+	 
+    #try:
+    link = torrent
+    TorrentFilePath='/tmp/'
+    params = {'save_path': TorrentFilePath,'duplicate_is_error': True}
+
+    h = lt.add_magnet_uri(ses, link,params)
+
+
+    while (not h.has_metadata()):
+    	time.sleep(1)
+
+
+    info = h.get_torrent_info()
+    #except:
+    #info = lt.torrent_info(torrent)
+    #h = ses.add_torrent({'ti': info, 'save_path': outdir})
+
+
     piecesperite = 40*1024*1024/info.piece_length() # 40 MB
     #print >> sys.stderr, 'piecesperite',piecesperite
     #print >> sys.stderr, 'info.piece_length()',info.piece_length()
@@ -264,7 +284,7 @@ def start(torrent,fileid,outdir,_outputcmd):
     offset2 = ((f.offset+f.size)%info.piece_length()) #how many bytes need we keep from the last piece
     #print >> sys.stderr,piecestart,pieceend,offset1,offset2,info.piece_length()
     #print >> sys.stderr,(pieceend-piecestart+1)*info.piece_length()-(offset1+offset2),f.size
-    ses = lt.session()
+
 
     state = None
     #state = lt.bdecode(open(state_file, "rb").read())
@@ -274,7 +294,9 @@ def start(torrent,fileid,outdir,_outputcmd):
     ses.add_dht_router("router.bitcomet.com", 6881)
     ses.listen_on(6881, 6891)
     ses.set_alert_mask(lt.alert.category_t.storage_notification)
-    h = ses.add_torrent({'ti': info, 'save_path': outdir})
+
+
+
     for i in range(info.num_pieces()):
         h.piece_priority(i,0)
     #print >> sys.stderr,'starting', h.name()
